@@ -8,4 +8,5 @@ import tornadofx.App
  * https://github.com/thomasnield/rxkotlinfx-tornadofx-demo
  * https://github.com/dltkddnr0502/tonadofx_practice
  * */
+
 class Find11stApplication: App(MyView::class)
