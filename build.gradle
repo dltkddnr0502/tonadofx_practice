@@ -4,6 +4,9 @@ version '1.0-SNAPSHOT'
 buildscript {
     ext.kotlin_version = '1.2.10'
     ext.ktor_version = '0.9.0'
+    ext.retrofitVersion="2.3.0"
+    ext.rxjavafx="2.2.2"
+    ext.rxkotlinfx="2.2.2"
 
     repositories {
         mavenCentral()
@@ -25,6 +28,28 @@ repositories {
 }
 
 dependencies {
+    compile "com.squareup.retrofit2:retrofit:$retrofitVersion"
+    compile "com.squareup.retrofit2:adapter-rxjava2:$retrofitVersion"
+    compile "com.squareup.retrofit2:converter-simplexml:$retrofitVersion"
+    compile "com.squareup.retrofit2:converter-gson:$retrofitVersion"
+
+    //compile "io.reactivex.rxjava2:rxjavafx:$rxjavafx"
+    compile "com.github.thomasnield:rxkotlinfx:$rxkotlinfx"
+
+    //<Moshi
+    //https://android.jlelse.eu/keddit-part-6-api-retrofit-kotlin-d309074af0
+    //compile "com.squareup.retrofit2:converter-moshi:2.0.0"
+    //https://www.youtube.com/watch?v=WvyScM_S88c
+    /*
+    * In summary, Moshi knows about Okio and its API, so it takes advantages of Okio buffers
+    * and read and write content directly into this buffer without requiring it to allocate
+    * extra memory for this process (to convert the response data stream into Java code and viceversa).
+    * In same way, Moshi is like a higher level API of Okio API
+    * so you are in fact just adding a simpler API on top of Okio.
+    * */
+    //Moshi>
+
+
     compile "no.tornado:tornadofx:1.7.15"
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile "io.ktor:ktor-server-netty:$ktor_version"
