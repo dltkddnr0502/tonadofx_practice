@@ -16,10 +16,7 @@ import io.reactivex.observers.ResourceObserver
 import io.reactivex.rxjavafx.observables.JavaFxObservable
 import io.reactivex.rxjavafx.observers.JavaFxObserver
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
-import io.reactivex.rxkotlin.Flowables
-import io.reactivex.rxkotlin.Observables
-import io.reactivex.rxkotlin.addTo
-import io.reactivex.rxkotlin.toObservable
+import io.reactivex.rxkotlin.*
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
 import javafx.event.EventType
@@ -102,6 +99,8 @@ class MyView : View() {
                                                 println(it)
                                             }
 
+
+
                                             /*var products = response?.body()?.products
                                             println(products.toString())
                                             products?.let{ product ->
@@ -171,6 +170,26 @@ class MyView : View() {
                                                     println(item.toString())
                                                 }
                                             }
+                                        }
+
+
+                                       response?.body()?.products?.product?.apply{
+                                            toFlowable()
+                                                    .filter { Integer.parseInt(it.buySatisfy)>90 }
+                                                    .distinct{ it.sellerNick }
+                                                    .skip(1)
+                                                    .take(3)
+                                                    .subscribeOn(Schedulers.io())
+                                                    .flatMap {
+                                                        it.run {
+                                                            Observable
+                                                                    .just<Triple<String?, String?, String?>>(Triple(prodName, prodPrice, prodCode))
+                                                                    .toFlowable(BackpressureStrategy.BUFFER)
+                                                        }
+                                                    }
+                                                    .subscribe { prod ->
+                                                        println(prod.toString())
+                                                    }
                                         }
                                     }
 
