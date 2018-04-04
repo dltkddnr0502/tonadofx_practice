@@ -81,7 +81,7 @@ class MyView : View() {
 
         button.setOnMouseClicked { event ->
             println("event: $event")
-            val switch = 7
+            val switch = 3
             when (switch) {
                 1 -> {
                     Flowable.just(API11stManager.queryCategories())
