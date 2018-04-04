@@ -33,7 +33,6 @@ dependencies {
     compile "com.squareup.retrofit2:converter-simplexml:$retrofitVersion"
     compile "com.squareup.retrofit2:converter-gson:$retrofitVersion"
 
-    //compile "io.reactivex.rxjava2:rxjavafx:$rxjavafx"
     compile "com.github.thomasnield:rxkotlinfx:$rxkotlinfx"
 
     //<Moshi
