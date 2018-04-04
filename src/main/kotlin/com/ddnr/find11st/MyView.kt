@@ -7,13 +7,21 @@ import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.toObservable
 import io.reactivex.*
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
 import io.reactivex.disposables.Disposables
+import io.reactivex.functions.BiFunction
+import io.reactivex.functions.Consumer
 import io.reactivex.observers.DisposableObserver
 import io.reactivex.observers.ResourceObserver
 import io.reactivex.rxjavafx.observables.JavaFxObservable
 import io.reactivex.rxjavafx.observers.JavaFxObserver
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
+import io.reactivex.rxkotlin.Flowables
+import io.reactivex.rxkotlin.Observables
+import io.reactivex.rxkotlin.addTo
+import io.reactivex.rxkotlin.toObservable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.BehaviorSubject
 import javafx.event.EventType
 import javafx.scene.control.Button
 import javafx.scene.control.Label
@@ -28,6 +36,7 @@ import retrofit2.Response
 import tornadofx.*
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
@@ -56,14 +65,16 @@ class MyView : View() {
 
 
         val di = JavaFxObservable.actionEventsOf(button)
-                .map{ae -> 1}
-                .doOnComplete { object: Runnable{
-                    override fun run() {
-                        println("Completed!")
+                .map { ae -> 1 }
+                .doOnComplete {
+                    object : Runnable {
+                        override fun run() {
+                            println("Completed!")
+                        }
                     }
-                } }
+                }
                 //.take(5)
-                .scan(0, {x,y -> x+y})
+                .scan(0, { x, y -> x + y })
                 .subscribe(System.out::println)
         disposalbles.add(di)
         //disposalbles.dispose()
@@ -297,27 +308,207 @@ class MyView : View() {
 
                     var dispo = Observable.just(1, 2, 3, 4)
                             .observeOn(JavaFxScheduler.platform())
+                            //.retryWhen((observable) -> {})
                             .subscribe(su)
+
 //                            .subscribe { next-> println{"$next"} }
 //                    dispo.dispose()
 
+                    Single.create<String> { subscriber ->
+                        subscriber.onSuccess("Succeed")
+                    }.doOnSuccess {
+                        println("Suceedd 12124124")
+                    }.subscribe()
+
+                    Observable.timer(1000, TimeUnit.SECONDS)
+                            .repeat(1)
+                            .subscribe { println("$it") }
+
                     val source = Observable.just(
                             //"A", "BB", "CCC", "D", "EE", "FFF"
-                               "Alpha", "Beta", "Gamma", "Delta", "Epsilon"
-                                //"123/52/6345", "23421/534", "758/2341/74932"
+                            "Alpha", "Beta", "Gamma", "Delta", "Epsilon"
+                            //"123/52/6345", "23421/534", "758/2341/74932"
                     )
+
+                    val defer = Observable.defer {
+                        println("createing defer")
+                        Observable.create<String> { subscriber ->
+                            println("createing observable")
+                            subscriber.onNext("1")
+//                            Thread.sleep(1000)
+                            subscriber.onNext("2")
+//                            Thread.sleep(1000)
+                            subscriber.onNext("3")
+                            subscriber.onComplete()
+                        }
+                    }
+                    defer.subscribe { println("defer sub 1 $it") }
+//                    Thread.sleep(1000)
+                    defer.subscribe { println("defer sub 2 $it") }
+
+                    val fj = Flowable.create<String>({ subscriber ->
+                        println("createing Flowable")
+                        subscriber.onNext("1")
+//                        Thread.sleep(1000)
+                        subscriber.onNext("2")
+//                        Thread.sleep(1000)
+                        subscriber.onNext("3")
+                        subscriber.onComplete()
+                    }, BackpressureStrategy.BUFFER)
+                    fj.subscribe { println("fj sub 1 $it") }
+//                    Thread.sleep(1000)
+                    fj.subscribe { println("fj sub 2 $it") }
+
+                    val af = Flowable.just("1", "2", "3", "4")
+                    af.subscribe { println("afj sub 1 $it") }
+                    af.subscribe { println("afj sub 2 $it") }
+
+
+                    println("defer: $defer")
+
+                    Observable.interval(1, TimeUnit.SECONDS)
+                            .toFlowable(BackpressureStrategy.BUFFER)
+                            .observeOn(JavaFxScheduler.platform())
+                            //.subscribe(::println)
+
+                    Observable.merge(
+                            Observable.just("A", "BB"),
+                            Observable.just("C", "DD")
+                            //Observable.just(1, 2, 3)
+                    ).subscribe {
+                        println("merge : $it")
+                    }
+
+
+                    Observable.combineLatest(
+                            Observable.just("ID", "ID1", "ID2"),
+                            Observable.just("PW", "PW2", "PW3", "PW4"),
+                            BiFunction<String, String, String> { t1, t2 ->
+                                println("$t1, $t2")
+                                t1 + "/" + t2
+                            }
+                    ).subscribe {
+                        println("combine lateset $it")
+                        /**
+                         * combine lateset ID2/PW
+                         * combine lateset ID2/PW2
+                         * combine lateset ID2/PW3
+                         * combine lateset ID2/PW4
+                         * */
+                    }
+
+
+                    Observables.combineLatest(
+                            Observable.just("1", "2"),
+                            Observable.just("A", "B", "C")
+                    ) { a, b ->
+                        println("ab")
+                        a + " | " + b
+                    }.subscribe {
+                        println("combine lateset $it")
+                        /*}.apply {
+                            disposalbles?.let { it.add(this) }*/
+                    }.addTo(disposalbles)
+
+                    Observable.just("")
+                            .subscribe {
+                                println(it)
+                            }
+
+                    Observable.just("")
+                            .subscribe(object : Consumer<String> {
+                                override fun accept(t: String?) {
+                                    println(t)
+                                }
+                            })
+
+                    Observable.just("")
+                            .subscribe(object : Observer<String> {
+                                override fun onSubscribe(d: Disposable) {
+                                }
+
+                                override fun onError(e: Throwable) {
+                                }
+
+                                override fun onComplete() {
+                                }
+
+                                override fun onNext(t: String) {
+                                }
+                            })
+
+                    Flowables.zip(
+                            Flowable.just("A", "BB"),
+                            Flowable.just(1, 2)
+                    ) { a, b ->
+                        println("$a, $b")
+                        a.length + b
+                    }.subscribe {
+                        println("Zip: $it")
+                    }.addTo(disposalbles)
+
+                    Flowable.zip(
+                            Flowable.just("A", "BB"),
+                            Flowable.just(1, 2),
+                            BiFunction<String, Int, Int> { a, b ->
+                                println("$a, $b")
+                                a.length + b
+                            }
+                    ).subscribe {
+                        println("Zip: $it")
+                    }
+
+                    Observable.zip(
+                            Observable.just("A", "BB"),
+                            Observable.just(1, 2, 3),
+                            BiFunction<String, Int, Int> { a, b ->
+                                println("$a, $b")
+                                a.length + b
+                            }
+                    ).subscribe {
+                        println("Zip: $it")
+                    }
+
+                    var f = Flowable.create<Int>({ sub ->
+                        println("Flowable, Create")
+                        sub.onNext(1)
+                        sub.onNext(2)
+                    }, BackpressureStrategy.BUFFER)
+                    //.subscribe { it -> println("$it") }
+                    println("F: $f")
+
+                    Observable.defer {
+                        var list = listOf("a", "b", "c")
+                        list.toObservable()
+                    }.subscribe {
+                        println("Defer: $it")
+                    }
+
+                    Observable.timer(5, TimeUnit.SECONDS)
+                            .subscribe {
+                                println("timer observable")
+                                defer.subscribe { it -> println("$it") }
+                            }
+
+                    Observable
+                            .fromCallable({ println("ABC Callable") })
+
+
+                    //.just("ABC")
+
+
                     source
                             //.skip(1)
-//                            .map { it.length }
-                            //.take(1)
+                            .map { it.length }
+                    //.take(1)
 //                            .takeUntil { it >= 2 }
 //                            .filter { it >= 2 }
 //                            .distinct()
 //                            .toList().subscribe { it->println(it) }
 //                            .count().subscribe { it -> println(it) }
-                            //.reduce(0, { c, n -> c + n }).subscribe { it -> println(it) }
+                    //.reduce(0, { c, n -> c + n }).subscribe { it -> println(it) }
 //                            .scan(0, { c, n -> c + n }).subscribe { it -> println(it) }
-                            //.flatMap{ Observable.fromArray(it.split('/')) }
+                    //.flatMap{ Observable.fromArray(it.split('/')) }
 //                            .subscribe(::println)
 
 
@@ -334,9 +525,44 @@ class MyView : View() {
                             .doOnNext { next -> println("next: $next, THRD: ${Thread.currentThread()}") }
                             .observeOn(JavaFxScheduler.platform())
                             .toFlowable(BackpressureStrategy.BUFFER)
-                            .subscribe { next ->
-                                println("netxt: $next, THRD: ${Thread.currentThread()}")
+                            .subscribe {
+                                println("netxt: $it, THRD: ${Thread.currentThread()}")
                             }
+
+
+                    Observable.just("1","2", "3")
+                            .switchMap {
+                                Observable.just(it+"X")
+                                        //.delay(1500, TimeUnit.MILLISECONDS)
+                            }
+                            .subscribe {
+                                println("switchMap: $it")
+                                //3X
+                            }
+                    Observable
+                            .concat(
+                            Observable.just("A", "B", "C"),
+                            Observable.just(1, 2, 3)
+                    ).subscribe {
+                        println("concat: $it")
+                    }
+                }
+                9 -> {
+                    println("8")
+                    Flowable.just("key")
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(JavaFxScheduler.platform())
+                            .subscribe { println("$it") }
+
+                    var userId: BehaviorSubject<String> = BehaviorSubject.create()
+                    userId.distinctUntilChanged()
+                            .observeOn(Schedulers.io())
+                            .subscribe {
+                                println("$it")
+                                //Save user id to preference
+                            }
+
+
                 }
                 else -> {
 
@@ -349,7 +575,7 @@ class MyView : View() {
 
 
         var listView = ListView<String>()
-        (0..9).asSequence().map{ it.toString() }.forEach { listView.items.add(it) }
+        (0..9).asSequence().map { it.toString() }.forEach { listView.items.add(it) }
         listView
                 .events(javafx.scene.input.MouseEvent.MOUSE_CLICKED)
 //                .events(javafx.scene.input.KeyEvent.KEY_RELEASED)
@@ -365,12 +591,12 @@ class MyView : View() {
         val editText = TextField()
         editText.textProperty()
                 .toObservable()
-                .subscribe {next -> println("$next") }
-                /*.addListener { _observable, oldValue, newValue ->
-            run {
-                println("old: $oldValue, new: $newValue")
-            }
-        }*/
+                .subscribe { next -> println("$next") }
+        /*.addListener { _observable, oldValue, newValue ->
+    run {
+        println("old: $oldValue, new: $newValue")
+    }
+}*/
         root.children += editText
     }
 
@@ -502,7 +728,13 @@ class MyView : View() {
         println("ret2: $ret2. Not reach if it is null by return statement")
     }
 
-    fun letPracticeSub(): Unit {
+    fun letPracticeSub() {
         return Unit
     }
+
+    fun returnInt(): Int{
+        return 1
+    }
+
+    fun returnInt2(): Int = 1
 }
