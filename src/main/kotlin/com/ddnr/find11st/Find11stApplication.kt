@@ -20,6 +20,12 @@ import tornadofx.App
  * https://rongi.github.io/kotlin-blog/rx-presenter.html
  * http://blog.danlew.net/2014/09/15/grokking-rxjava-part-1/
  * https://medium.com/appunite-edu-collection/rxjava-flatmap-switchmap-and-concatmap-differences-examples-6d1f3ff88ee0
+ * https://fernandocejas.com/assets/migrated/final_results_concatMap.png
+
+ * https://kotlinlang.org/docs/reference/keyword-reference.html
+ *
+ * http://kotlinlang.org/docs/reference/multiplatform.html#platform-specific-declarations
+ * actual / expect
  *
  * */
 

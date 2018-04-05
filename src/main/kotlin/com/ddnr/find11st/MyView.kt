@@ -6,6 +6,8 @@ import com.github.thomasnield.rxkotlinfx.actionEvents
 import com.github.thomasnield.rxkotlinfx.events
 import com.github.thomasnield.rxkotlinfx.toObservable
 import io.reactivex.*
+import io.reactivex.Observable
+import io.reactivex.Observer
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.disposables.Disposables
@@ -14,29 +16,28 @@ import io.reactivex.functions.Consumer
 import io.reactivex.observers.DisposableObserver
 import io.reactivex.observers.ResourceObserver
 import io.reactivex.rxjavafx.observables.JavaFxObservable
-import io.reactivex.rxjavafx.observers.JavaFxObserver
 import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
 import io.reactivex.rxkotlin.*
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import javafx.event.EventType
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
-import javafx.scene.input.TouchEvent
-import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
+import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.experimental.time.withTimeout
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import tornadofx.*
-import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
-import java.util.concurrent.Callable
+import tornadofx.View
+import java.time.Duration
+import java.util.*
 import java.util.concurrent.TimeUnit
-import javax.swing.event.ChangeEvent
-import javax.swing.event.ChangeListener
+import kotlin.concurrent.thread
+import kotlin.system.measureTimeMillis
+
+//import kotlinx.coroutines.experimental.javafx.JavaFx as UI
 
 /**
  * https://developers.skplanetx.com/apidoc/kor/11st/product/#doc1431
@@ -45,12 +46,14 @@ class MyView : View() {
     data class D(
             var a: String,
             var b: Int,
-            var c: Boolean
+            var c: Boolean = true
     ) {
-        init{
+        init {
             println("DDDDD")
         }
 
+        var isEmpty: Boolean = a.length == 0
+            get() = a.length == 0
     }
 
     class AC(a: String) {
@@ -66,11 +69,11 @@ class MyView : View() {
                 //can not be private*
             get() {
                 println("cons get, field: $field")
-                val r = if(field.length > 0 ) field else 0
-                //return field
+                val r = if (field.length > 0) field else 0
+                return field
             }
-            //get() = field
-            //can internal, private, public
+                //get() = field
+                //can internal, private, public
             public set(value) {
                 println("cons set, value: $value")
                 field = value
@@ -94,12 +97,11 @@ class MyView : View() {
 
     init {
         ac.a
-        ac.a="1"
+        ac.a = "1"
 
         dd.component1()
         dd.component2()
         dd.component3()
-
 
 
         var button: Button = Button("start")
@@ -144,7 +146,6 @@ class MyView : View() {
                                             category?.let { it ->
                                                 println(it)
                                             }
-
 
 
                                             /*var products = response?.body()?.products
@@ -193,6 +194,42 @@ class MyView : View() {
                             }, { println("Succeed") })
                 }
                 3 -> {
+                    async {
+                        withTimeout(
+                                java.time.Duration.ofSeconds(1000, 50),
+                                {
+                                    repeat(1) {
+                                        println("Timeout ${it}")
+                                        //delay(500)
+                                    }
+                                }
+                        )
+
+                        withTimeout(Duration.ofMillis(25000)) {
+                            repeat(3) {
+                                println("$it")
+                            }
+                        }
+                    }
+
+                    val coV1 = async(CoroutineName("v1")) {
+                        delay(500)
+                        println("coroutine Name: ${Thread.currentThread().name}")
+                        252
+                    }
+
+                    val coV2 = async(CoroutineName("v2")) {
+                        delay(500)
+                        println("coroutine Name: ${Thread.currentThread().name}")
+                        "Su"
+                    }
+
+                    async {
+                        println("coV1 ${coV1}")
+                        println("coV2 ${coV2[coV2.key].toString()}")
+                        println("coV ${coV1.await()} , ${coV2.await()}")
+                    }
+
                     Flowable.just(API11stManager.search("asus"))
                             .subscribeOn(Schedulers.io())
                             .subscribe({ next ->
@@ -218,18 +255,215 @@ class MyView : View() {
                                             }
                                         }
 
-
-                                       response?.body()?.products?.product?.apply{
+//                                        println("flatMap")
+                                        response?.body()?.products?.product?.apply {
                                             toFlowable()
-                                                    .filter { Integer.parseInt(it.buySatisfy)>90 }
-                                                    .distinct{ it.sellerNick }
-                                                    .skip(1)
-                                                    .take(3)
+//                                                    .filter { Integer.parseInt(it.buySatisfy)>90 }
+//                                                    .distinct{ it.sellerNick }
+//                                                    .skip(1)
+//                                                    .take(3)
                                                     .subscribeOn(Schedulers.io())
                                                     .flatMap {
                                                         it.run {
+                                                            //                                                            println("flatMap run ")
                                                             Observable
-                                                                    .just<Triple<String?, String?, String?>>(Triple(prodName, prodPrice, prodCode))
+                                                                    .just<Triple<String?, String?, String?>>(
+                                                                            Triple(prodName, prodPrice, prodCode),
+                                                                            Triple(prodName + "2", prodPrice, prodCode)
+                                                                    )
+                                                                    .delay(Random(System.currentTimeMillis()).nextLong() / 500, TimeUnit.MILLISECONDS)
+                                                                    .toFlowable(BackpressureStrategy.BUFFER)
+                                                        }
+                                                    }
+                                                    .subscribe { prod ->
+                                                        //                                                        println(prod.toString())
+                                                    }
+                                        }
+
+//                                        println("concatMap")
+                                        response?.body()?.products?.product?.apply {
+                                            toFlowable()
+//                                                    .filter { Integer.parseInt(it.buySatisfy)>90 }
+//                                                    .distinct{ it.sellerNick }
+//                                                    .skip(1)
+//                                                    .take(3)
+                                                    .subscribeOn(Schedulers.io())
+                                                    .concatMap {
+                                                        it.run {
+                                                            //                                                            println("concatMap run")
+                                                            Observable
+                                                                    .just<Triple<String?, String?, String?>>(
+                                                                            Triple(prodName, prodPrice, prodCode),
+                                                                            Triple(prodName + "2", prodPrice, prodCode)
+                                                                    )
+                                                                    .delay(Random(System.currentTimeMillis()).nextLong() / 500, TimeUnit.MILLISECONDS)
+                                                                    .toFlowable(BackpressureStrategy.BUFFER)
+                                                        }
+                                                    }
+                                                    .subscribe { prod ->
+                                                        //                                                        println(prod.toString())
+                                                    }
+                                        }
+
+//                                        println("switchMap")
+
+
+                                        println("run blocking")
+                                        runBlocking {
+                                            println("in run blocking")
+                                            delay(1000)
+                                            println("finish run blocking")
+                                        }
+
+                                        println("before 1 launch : ${Thread.currentThread()}")
+                                        launch {
+                                            println("in 1 launch : ${Thread.currentThread()}")
+                                        }
+
+                                        async {
+                                            launch {
+                                                println(" in launch")
+                                                delay(1000)
+                                                println("finish launch")
+                                            }?.join()
+
+                                            println("joined")
+                                        }
+
+                                        async {
+                                            val time = measureTimeMillis {
+                                                val a = async/*(CoroutineName("V1"))*/ {
+                                                    repeat(10) {
+                                                        delay(500)
+                                                        println("a")
+                                                    }
+                                                }
+
+                                                val b = async/*(CoroutineName("V2"))*/ {
+                                                    repeat(10) {
+                                                        delay(500)
+                                                        println("b")
+                                                    }
+                                                }
+
+                                                println("before joined")
+                                                a.join()
+                                                b.join()
+
+//                                                a.await()
+//                                                b.await()
+                                                println("joineddddddddd")
+                                            }
+                                            println("time: $time")
+                                        }
+
+                                        runBlocking {
+                                            val time = measureTimeMillis {
+                                                val a = async(CoroutineName("V1"), CoroutineStart.ATOMIC) {
+                                                    repeat(10) {
+                                                        delay(500)
+                                                        println("v1 a")
+                                                    }
+                                                }
+
+                                                val b = async(CoroutineName("V2"), CoroutineStart.DEFAULT) {
+                                                    repeat(10) {
+                                                        delay(500)
+                                                        println("v2 b")
+                                                    }
+                                                }
+
+                                                println("before 2 joined")
+                                                a.join()
+                                                b.join()
+
+//                                                a.await()
+//                                                b.await()
+                                                println("join2 eddddddddd")
+                                            }
+                                            println("time2: $time")
+                                        }
+
+                                        launch {
+                                            val time = measureTimeMillis {
+                                                val a = async/*(CoroutineName("V1"))*/ {
+                                                    repeat(10) {
+                                                        delay(500)
+                                                        println("a")
+                                                    }
+                                                }
+
+                                                val b = async/*(CoroutineName("V2"))*/ {
+                                                    repeat(10) {
+                                                        delay(500)
+                                                        println("b")
+                                                    }
+                                                }
+
+                                                println("before 3 joined")
+                                                a.join()
+                                                b.join()
+
+//                                                a.await()
+//                                                b.await()
+                                                println("join3 eddddddddd")
+                                            }
+                                            println("time3: $time")
+                                        }
+
+                                        async {
+                                            println(" in async ")
+                                            delay(1000)
+                                            println("finish async ")
+                                        }
+
+                                        println("before 2 launch : ${Thread.currentThread()}")
+                                        launch {
+                                            println("in 2 launch : ${Thread.currentThread()}")
+                                        }
+
+
+                                        async {
+                                            delay(500)
+
+                                            thread {
+                                                println("thread block: ${Thread.currentThread()}")
+                                                //doSuspending("aaa") //suspend fun, compile error!
+                                                //letPractice()
+                                            }
+
+                                            println("1 ${Thread.currentThread()}")
+                                            Thread.sleep(1000)
+                                            println("2 ${Thread.currentThread()}")
+                                            Thread.sleep(1000)
+                                            "Finished"
+                                            launch {
+                                                println("launche: ${Thread.currentThread().name}")
+                                            }
+                                        }?.let {
+                                            //println("runn thread:  ${Thread.currentThread()}")
+                                            async {
+                                                println("async ${it.await()}")
+                                            }
+                                        }
+
+
+                                        response?.body()?.products?.product?.apply {
+                                            toFlowable()
+//                                                    .filter { Integer.parseInt(it.buySatisfy)>90 }
+//                                                    .distinct{ it.sellerNick }
+//                                                    .skip(1)
+//                                                    .take(3)
+                                                    .subscribeOn(Schedulers.io())
+                                                    .switchMap {
+                                                        it.run {
+                                                            //                                                            println("switchMap run")
+                                                            Observable
+                                                                    .just<Triple<String?, String?, String?>>(
+                                                                            Triple(prodName, prodPrice, prodCode),
+                                                                            Triple(prodName + "2", prodPrice, prodCode)
+                                                                    )
+                                                                    .delay(Random(System.currentTimeMillis()).nextLong() / 1000, TimeUnit.MILLISECONDS)
                                                                     .toFlowable(BackpressureStrategy.BUFFER)
                                                         }
                                                     }
@@ -246,6 +480,13 @@ class MyView : View() {
                             }, { error ->
                                 println("error: $error")
                             }, { println("Succeed") })
+
+                    //doSuspending("Not from async") //Compile error
+
+                    async {
+                        println("async suspending: ${Thread.currentThread()}")
+                        doSuspending("Suspedddd")
+                    }
                 }
                 4 -> {
                     val p = Observable.just(API11stManager.search("asus"))
@@ -434,7 +675,7 @@ class MyView : View() {
                     Observable.interval(1, TimeUnit.SECONDS)
                             .toFlowable(BackpressureStrategy.BUFFER)
                             .observeOn(JavaFxScheduler.platform())
-                            //.subscribe(::println)
+                    //.subscribe(::println)
 
                     Observable.merge(
                             Observable.just("A", "BB"),
@@ -595,10 +836,10 @@ class MyView : View() {
                             }
 
 
-                    Observable.just("1","2", "3")
+                    Observable.just("1", "2", "3")
                             .switchMap {
-                                Observable.just(it+"X")
-                                        //.delay(1500, TimeUnit.MILLISECONDS)
+                                Observable.just(it + "X")
+                                //.delay(1500, TimeUnit.MILLISECONDS)
                             }
                             .subscribe {
                                 println("switchMap: $it")
@@ -606,9 +847,9 @@ class MyView : View() {
                             }
                     Observable
                             .concat(
-                            Observable.just("A", "B", "C"),
-                            Observable.just(1, 2, 3)
-                    ).subscribe {
+                                    Observable.just("A", "B", "C"),
+                                    Observable.just(1, 2, 3)
+                            ).subscribe {
                         println("concat: $it")
                     }
                 }
@@ -797,9 +1038,14 @@ class MyView : View() {
         return Unit
     }
 
-    fun returnInt(): Int{
+    fun returnInt(): Int {
         return 1
     }
 
     fun returnInt2(): Int = 1
+
+    suspend fun doSuspending(a: String): Int {
+        println("doSuspending: ${Thread.currentThread()}")
+        return a.length
+    }
 }

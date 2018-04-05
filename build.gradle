@@ -8,6 +8,7 @@ buildscript {
     ext.rxjavafx="2.2.2"
     ext.rxkotlinfx="2.2.2"
     ext.rxkotlin = "2.2.0"
+    ext.kotlin_version = '1.2.21'
 
     repositories {
         mavenCentral()
@@ -19,6 +20,8 @@ buildscript {
 
 apply plugin: 'java'
 apply plugin: 'kotlin'
+
+//kotlin.coroutines=enable
 
 sourceCompatibility = 1.8
 
@@ -34,6 +37,7 @@ dependencies {
     compile "com.squareup.retrofit2:converter-simplexml:$retrofitVersion"
     compile "com.squareup.retrofit2:converter-gson:$retrofitVersion"
 
+    compile 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5'
     compile "com.github.thomasnield:rxkotlinfx:$rxkotlinfx"
     compile "io.reactivex.rxjava2:rxkotlin:$rxkotlin"
 
