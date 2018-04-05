@@ -42,8 +42,45 @@ import javax.swing.event.ChangeListener
  * https://developers.skplanetx.com/apidoc/kor/11st/product/#doc1431
  * */
 class MyView : View() {
-    override val root = VBox()
+    data class D(
+            var a: String,
+            var b: Int,
+            var c: Boolean
+    ) {
+        init{
+            println("DDDDD")
+        }
 
+    }
+
+    class AC(a: String) {
+        init {
+            println("Init $a")
+        }
+
+        constructor(a: String, b: Int) : this(a) {
+            println("2nd Cons $a, $b")
+        }
+
+        var a = a
+                //can not be private*
+            get() {
+                println("cons get, field: $field")
+                val r = if(field.length > 0 ) field else 0
+                //return field
+            }
+            //get() = field
+            //can internal, private, public
+            public set(value) {
+                println("cons set, value: $value")
+                field = value
+            }
+    }
+
+    override val root = VBox()
+    val dd: D = D("a,", 1)
+    val ac: AC = AC("a")
+    val ac2: AC = AC("a", 2)
     val disposalble: Disposables? = null
     fun abc(observable: Observable<ProductSearchResponse>, categoryResponse: Observable<CategoryResponse>) {
 
@@ -56,6 +93,15 @@ class MyView : View() {
     val disposalbles = CompositeDisposable()
 
     init {
+        ac.a
+        ac.a="1"
+
+        dd.component1()
+        dd.component2()
+        dd.component3()
+
+
+
         var button: Button = Button("start")
         button.actionEvents()
                 .subscribe { it -> println(it) }
