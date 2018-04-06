@@ -8,7 +8,7 @@ buildscript {
     ext.rxjavafx="2.2.2"
     ext.rxkotlinfx="2.2.2"
     ext.rxkotlin = "2.2.0"
-    ext.kotlin_version = '1.2.21'
+    ext.kotlin_version = '1.2.31'
 
     repositories {
         mavenCentral()
@@ -29,6 +29,16 @@ repositories {
     mavenCentral()
     jcenter()
     maven {url 'http://kotlin.bintray.com/ktor'}
+}
+
+kotlin {
+    experimental {
+        coroutines "error"
+    }
+}
+
+kapt {
+    useBuildCache = true
 }
 
 dependencies {
@@ -55,15 +65,19 @@ dependencies {
     //Moshi>
 
 
-    compile "no.tornado:tornadofx:1.7.15"
+    //compile "org.jetbrains.kotlin:kotlin-stdlib"
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    compile "no.tornado:tornadofx:1.7.15"
     compile "io.ktor:ktor-server-netty:$ktor_version"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 compileKotlin {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.suppressWarnings = true
 }
 compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.suppressWarnings = true
 }

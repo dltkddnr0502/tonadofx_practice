@@ -27,6 +27,8 @@ import tornadofx.App
  * http://kotlinlang.org/docs/reference/multiplatform.html#platform-specific-declarations
  * actual / expect
  *
+ * https://blog.philipphauer.de/idiomatic-kotlin-best-practices/
+ *
  * */
 
 class Find11stApplication: App(MyView::class)

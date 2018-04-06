@@ -35,6 +35,7 @@ import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlin.coroutines.experimental.RestrictsSuspension
 import kotlin.system.measureTimeMillis
 
 //import kotlinx.coroutines.experimental.javafx.JavaFx as UI
@@ -42,21 +43,34 @@ import kotlin.system.measureTimeMillis
 /**
  * https://developers.skplanetx.com/apidoc/kor/11st/product/#doc1431
  * */
+typealias Foo<T> = (T) -> Boolean
+typealias MyHandler<T1, T2, T3, R> = (T1, T2, T3) -> R
+typealias MyHandler2<T1, T2, T3, R> = (T1, T2, T3) -> R
+
 class MyView : View() {
+
     data class D(
             var a: String,
             var b: Int,
             var c: Boolean = true
     ) {
+
         init {
             println("DDDDD")
         }
 
         var isEmpty: Boolean = a.length == 0
-            get() = a.length == 0
+            get(){
+                return a.length == 0
+            }
+
     }
 
-    class AC(a: String) {
+
+    annotation class Fancy
+
+    @RestrictsSuspension //to prevent the user from adding new ways of suspending a coroutine.
+    @Fancy inner class AC(a: String) {
         init {
             println("Init $a")
         }
@@ -65,6 +79,9 @@ class MyView : View() {
             println("2nd Cons $a, $b")
         }
 
+        fun abc(){
+
+        }
         var a = a
                 //can not be private*
             get() {
@@ -80,24 +97,148 @@ class MyView : View() {
             }
     }
 
+    interface A {
+        fun <T> getT(): T?
+        fun <T> setT(tt: T)
+    }
+
+
+    class Box<T>(t: T) {
+        private var v: T = t
+
+        fun abc(): T {
+            return v
+        }
+
+        fun abcIn(tt: T) {
+            v = tt
+        }
+    }
+
+    /////
+    //https://kotlinlang.org/docs/reference/generics.html
+    val bt: BoxT = BoxT()
+    class BoxT: Source<String>{
+        override fun nextT(): String {
+            return ""
+        }
+    }
+
+    fun demo(strs: Source<String>) {
+        val objects: Source<Any> = strs // This is OK, since T is an out-parameter
+    }
+
+    interface Source<out T> {
+        fun nextT(): T
+    }
+
+    interface Comparable<in T> {
+        operator fun compareTo(other: T): Int
+    }
+
+    fun demo(x: Comparable<Number>) {
+        x.compareTo(1.0) // 1.0 has type Double, which is a subtype of Number
+        // Thus, we can assign x to a variable of type Comparable<Double>
+        val y: Comparable<Double> = x // OK!
+    }
+    /////
+
     override val root = VBox()
+    val aS: Box<String> = Box("ABC")
     val dd: D = D("a,", 1)
     val ac: AC = AC("a")
     val ac2: AC = AC("a", 2)
     val disposalble: Disposables? = null
-    fun abc(observable: Observable<ProductSearchResponse>, categoryResponse: Observable<CategoryResponse>) {
+    val aDIs: Box<Disposables> = Box(CompositeDisposable() as Disposables)
+
+    //@Suppress("NOTHING_TO_INLINE")
+    /* In case you want only some of the lambdas passed to an inline function to be inlined,
+    you can mark some of your function parameters with the noinline modifier: */
+    inline fun <T, R> abc(noinline block: T.() -> Unit, block2: (T) -> R) {
 
     }
 
+    inline fun abc(observable: Observable<ProductSearchResponse>, categoryResponse: Observable<CategoryResponse>) {
+
+    }
+
+    private /*suspend*/ fun AC.foo() {
+
+    }
     fun abcd() {
 
     }
 
     val disposalbles = CompositeDisposable()
 
+
+    fun bar(foo: Foo<Int>) = foo(42)
+    fun bar2(foo2: MyHandler<Int, String, Int, Int>): Int = foo2(1, "My", 3)
+    fun bar3(foo3: MyHandler<Int, Int, Int, Boolean>): Boolean = foo3(1, 2, 3)
+    fun bar4(foo3: MyHandler2<Int, Int, Int, String>): String = foo3(1, 2, 3)
+    fun bar5(name: String){
+        println(name.length)
+    }
+    fun bar6(name: String?): String?{
+        println(name?.length)
+        return null
+    }
+
+    fun bar7(name: String?): String{
+        println(name?.length)
+        return ""
+    }
+
     init {
+        foo()
+        var f: (Int) -> Boolean = {
+            it > 0
+        }
+        bar(f)
+        var ff: (Int, String, Int) -> Int = { i, s, a ->
+            i+s.length+a
+        }
+        println("${bar2(ff)}")
+
+        var fff: (Int, Int, Int) -> Boolean = {i, ii, iii ->
+            i+ii+iii > 1
+        }
+        var ffff: (Int, Int, Int) -> String = {i, ii, iii ->
+            (i+ii+iii).toString()
+        }
+        println("${bar3(fff)}")
+        println("${bar4(ffff)}")
+        val nN=""
+
+        val a: String? = nN as? String
+        val b: String? = nN as? String?
+
+        listOf(1,3,4,5,6,7).reversed()
+        listOf(1,3,4,5,6,7)
+        mutableListOf(1,2,3).add(4)
+        1.rangeTo(100)
+        println(100.downTo(5).reversed().step(2).step(2))
+
+        val nll: String?=null
+        bar5(nN)
+        //bar5(nll) //err
+        //bar5(bar6(null)) //err
+        bar5(bar7(null))
+        bar6(null)
+
+        """ .'''*((.. ${'$'}eq """
+
+        println("Spliet: ${"12.345.6a".split(".")}")
+
         ac.a
         ac.a = "1"
+
+        val lE = listOf("a", "b").toTypedArray()
+        println("LE ${listOf("lE: ", *lE)}")
+
+        //val (num, name) = mapOf(1 to "one")
+        val (num, name) = 1 to "one"
+        println("$num, $name")
 
         dd.component1()
         dd.component2()
@@ -1044,7 +1185,9 @@ class MyView : View() {
 
     fun returnInt2(): Int = 1
 
-    suspend fun doSuspending(a: String): Int {
+
+
+    private suspend fun doSuspending(a: String): Int {
         println("doSuspending: ${Thread.currentThread()}")
         return a.length
     }
