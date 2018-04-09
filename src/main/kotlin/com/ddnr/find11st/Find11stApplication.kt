@@ -29,6 +29,11 @@ import tornadofx.App
  *
  * https://blog.philipphauer.de/idiomatic-kotlin-best-practices/
  *
+ * https://android.jlelse.eu/playing-with-kotlin-higher-order-functions-aecce3d72a12
+ * https://android.jlelse.eu/keddit-part-7-infinite-scroll-higher-order-functions-lambdas-3a11fbd5090e
+ * http://freecontent.manning.com/declaring-higher-order-functions/
+ *
+ * https://android.jlelse.eu/kotlin-what-is-a-sealed-classe-1e535c416519
  * */
 
 class Find11stApplication: App(MyView::class)

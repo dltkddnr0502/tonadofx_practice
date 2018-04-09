@@ -1,5 +1,6 @@
 package com.ddnr.find11st.api
 
+import com.ddnr.find11st.MyView
 import com.ddnr.find11st.ProductSearchResponse
 import com.ddnr.find11st.model.CategoryResponse
 import retrofit2.Call
@@ -31,6 +32,8 @@ object API11stManager {
 
     private val api11stPlanet: API11stPlanet by lazy {
         println("API11stPlanet Created!")
+        val a: MyView.StateEnum = MyView.StateEnum.IDLE //object
+        val b: MyView.StateEnum = MyView.StateEnum.BUSY() //class
         createPlanet()
     }
 

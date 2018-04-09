@@ -60,7 +60,7 @@ class MyView : View() {
         }
 
         var isEmpty: Boolean = a.length == 0
-            get(){
+            get() {
                 return a.length == 0
             }
 
@@ -79,9 +79,10 @@ class MyView : View() {
             println("2nd Cons $a, $b")
         }
 
-        fun abc(){
+        fun abc() {
 
         }
+
         var a = a
                 //can not be private*
             get() {
@@ -97,31 +98,102 @@ class MyView : View() {
             }
     }
 
-    interface A {
-        fun <T> getT(): T?
-        fun <T> setT(tt: T)
+    sealed class StateEnum {
+        abstract fun direction(x: Int, y: Int): Pair<Int, Int>
+
+        object IDLE : StateEnum(){  //SINGLE INSTANCE!!!
+            override fun direction(x: Int, y: Int) = x to x + y
+        }
+
+        class BUSY : StateEnum(){ //CAN class!!!! Multiple INSTANCE!!
+            override fun direction(x: Int, y: Int): Pair<Int, Int> {
+                return x to x + y
+            }
+        }
+    }
+
+    //val stateEnum: StateEnum = StateEnum.IDLE()
+
+    enum class StatusEnum {
+        IDLE { //SINGLE INSTANCE!!!
+            override fun direction(x: Int, y: Int) =  x to x + y
+        },
+        BUSY { //SINGLE INSTANCE!!!
+            override fun direction(x: Int, y: Int): Pair<Int, Int> {
+                return x to x + y
+            }
+        };
+        //DO NOT FORGET ';'
+        abstract fun direction(x: Int, y: Int): Pair<Int, Int>
+    }
+    fun abdsfdf(state: StateEnum) = when (state) {
+        is StateEnum.IDLE -> ""
+        is StateEnum.BUSY -> ""
     }
 
 
+    /*inner */class ImplHighOrderFunction(nn: String="", var ss: String="IDLE") {
+        init{
+            println("$nn / $ss")
+        }
+
+        val aaaa = nn
+
+        fun abc() {
+            println("${aaaa} / ${this.ss}")
+        }
+
+        fun <T, R> lollipopAndAbove(
+                a: T, b: T, s: String,
+                body: (T) -> R
+        ): R {
+            println(" ")
+            return body(a)
+        }
+    }
+
+    fun <T, R> lollipopAndAbove(
+            a: T, b: T, s: String,
+            body: (T) -> Unit
+    ): (T) -> R {
+        //return body(a)
+        body(a)
+        return { T ->
+            println("TTTT ${T}")
+            "AA $T AA" as R
+        }
+    }
+
     class Box<T>(t: T) {
         private var v: T = t
+
+        private val finalV: String by lazy {
+            ""//initA()
+        }
 
         fun abc(): T {
             return v
         }
 
         fun abcIn(tt: T) {
+
             v = tt
         }
     }
 
+
     /////
     //https://kotlinlang.org/docs/reference/generics.html
     val bt: BoxT = BoxT()
-    class BoxT: Source<String>{
+
+    class BoxT : Source<String> {
         override fun nextT(): String {
             return ""
         }
+    }
+
+    fun demo2(strs: String): String {
+        return ""
     }
 
     fun demo(strs: Source<String>) {
@@ -149,7 +221,8 @@ class MyView : View() {
     val ac: AC = AC("a")
     val ac2: AC = AC("a", 2)
     val disposalble: Disposables? = null
-    val aDIs: Box<Disposables> = Box(CompositeDisposable() as Disposables)
+    //val aDIs: Box<Disposables> = Box(CompositeDisposable() as Disposables)
+    val implHighOrderFunction: ImplHighOrderFunction = ImplHighOrderFunction()
 
     //@Suppress("NOTHING_TO_INLINE")
     /* In case you want only some of the lambdas passed to an inline function to be inlined,
@@ -165,6 +238,7 @@ class MyView : View() {
     private /*suspend*/ fun AC.foo() {
 
     }
+
     fun abcd() {
 
     }
@@ -176,50 +250,81 @@ class MyView : View() {
     fun bar2(foo2: MyHandler<Int, String, Int, Int>): Int = foo2(1, "My", 3)
     fun bar3(foo3: MyHandler<Int, Int, Int, Boolean>): Boolean = foo3(1, 2, 3)
     fun bar4(foo3: MyHandler2<Int, Int, Int, String>): String = foo3(1, 2, 3)
-    fun bar5(name: String){
+    fun bar5(name: String) {
         println(name.length)
     }
-    fun bar6(name: String?): String?{
+
+    fun bar6(name: String?): String? {
         println(name?.length)
         return null
     }
 
-    fun bar7(name: String?): String{
+    fun bar7(name: String?): String {
+        fun lo(subName: String?): String {
+            return subName?.toUpperCase()?:""
+        }
         println(name?.length)
-        return ""
+        return lo(name)
+    }
+
+    val initPlug: Int.(Int) -> Int = { b ->
+        println("initPlug $this + $b")
+        this + b
     }
 
     init {
-        foo()
+        val ret1 = lollipopAndAbove<Int, String>(
+                initPlug(1, 2), 2, "HighOrderFunctionInterface3"
+        ) { a ->
+            println("HighOrderFunctionInterface1: $a")
+            //"HighOrderFunctionInterface: $a"
+        }
+
+        println("ret1: ${ret1(123)}")
+
+        val ar2 = { i: Int -> i + 1 }
+        implHighOrderFunction.lollipopAndAbove(
+                ar2(1), 2, "HighOrderFunctionInterface"
+        ) { a ->
+            println("HighOrderFunctionInterface2: $a")
+        }
+
+        val ar = { i: Int -> i + 1 }
+        ar(1)
+
+        2.initPlug(2)
+        initPlug(2, 2)
+        initPlug.invoke(2, 2)
+
         var f: (Int) -> Boolean = {
             it > 0
         }
         bar(f)
         var ff: (Int, String, Int) -> Int = { i, s, a ->
-            i+s.length+a
+            i + s.length + a
         }
         println("${bar2(ff)}")
 
-        var fff: (Int, Int, Int) -> Boolean = {i, ii, iii ->
-            i+ii+iii > 1
+        var fff: (Int, Int, Int) -> Boolean = { i, ii, iii ->
+            i + ii + iii > 1
         }
-        var ffff: (Int, Int, Int) -> String = {i, ii, iii ->
-            (i+ii+iii).toString()
+        var ffff: (Int, Int, Int) -> String = { i, ii, iii ->
+            (i + ii + iii).toString()
         }
         println("${bar3(fff)}")
         println("${bar4(ffff)}")
-        val nN=""
+        val nN = ""
 
         val a: String? = nN as? String
         val b: String? = nN as? String?
 
-        listOf(1,3,4,5,6,7).reversed()
-        listOf(1,3,4,5,6,7)
-        mutableListOf(1,2,3).add(4)
+        listOf(1, 3, 4, 5, 6, 7).reversed()
+        listOf(1, 3, 4, 5, 6, 7)
+        mutableListOf(1, 2, 3).add(4)
         1.rangeTo(100)
         println(100.downTo(5).reversed().step(2).step(2))
 
-        val nll: String?=null
+        val nll: String? = null
         bar5(nN)
         //bar5(nll) //err
         //bar5(bar6(null)) //err
@@ -772,7 +877,7 @@ class MyView : View() {
                             .subscribe { println("$it") }
 
                     val source = Observable.just(
-                            //"A", "BB", "CCC", "D", "EE", "FFF"
+                            //"HighOrderFunctionInterface", "BB", "CCC", "D", "EE", "FFF"
                             "Alpha", "Beta", "Gamma", "Delta", "Epsilon"
                             //"123/52/6345", "23421/534", "758/2341/74932"
                     )
@@ -819,7 +924,7 @@ class MyView : View() {
                     //.subscribe(::println)
 
                     Observable.merge(
-                            Observable.just("A", "BB"),
+                            Observable.just("HighOrderFunctionInterface", "BB"),
                             Observable.just("C", "DD")
                             //Observable.just(1, 2, 3)
                     ).subscribe {
@@ -847,7 +952,7 @@ class MyView : View() {
 
                     Observables.combineLatest(
                             Observable.just("1", "2"),
-                            Observable.just("A", "B", "C")
+                            Observable.just("HighOrderFunctionInterface", "BUSY", "C")
                     ) { a, b ->
                         println("ab")
                         a + " | " + b
@@ -885,7 +990,7 @@ class MyView : View() {
                             })
 
                     Flowables.zip(
-                            Flowable.just("A", "BB"),
+                            Flowable.just("HighOrderFunctionInterface", "BB"),
                             Flowable.just(1, 2)
                     ) { a, b ->
                         println("$a, $b")
@@ -895,7 +1000,7 @@ class MyView : View() {
                     }.addTo(disposalbles)
 
                     Flowable.zip(
-                            Flowable.just("A", "BB"),
+                            Flowable.just("HighOrderFunctionInterface", "BB"),
                             Flowable.just(1, 2),
                             BiFunction<String, Int, Int> { a, b ->
                                 println("$a, $b")
@@ -906,7 +1011,7 @@ class MyView : View() {
                     }
 
                     Observable.zip(
-                            Observable.just("A", "BB"),
+                            Observable.just("HighOrderFunctionInterface", "BB"),
                             Observable.just(1, 2, 3),
                             BiFunction<String, Int, Int> { a, b ->
                                 println("$a, $b")
@@ -988,7 +1093,7 @@ class MyView : View() {
                             }
                     Observable
                             .concat(
-                                    Observable.just("A", "B", "C"),
+                                    Observable.just("HighOrderFunctionInterface", "BUSY", "C"),
                                     Observable.just(1, 2, 3)
                             ).subscribe {
                         println("concat: $it")
@@ -1184,7 +1289,6 @@ class MyView : View() {
     }
 
     fun returnInt2(): Int = 1
-
 
 
     private suspend fun doSuspending(a: String): Int {
