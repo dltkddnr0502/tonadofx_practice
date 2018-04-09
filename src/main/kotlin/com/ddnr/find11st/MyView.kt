@@ -171,6 +171,8 @@ class MyView : View() {
             ""//initA()
         }
 
+
+
         fun abc(): T {
             return v
         }
@@ -372,7 +374,7 @@ class MyView : View() {
 
         button.setOnMouseClicked { event ->
             println("event: $event")
-            val switch = 3
+            val switch = 1
             when (switch) {
                 1 -> {
                     Flowable.just(API11stManager.queryCategories())
@@ -387,13 +389,64 @@ class MyView : View() {
                                         println("response.body(): ${response?.body().toString()}")
 
                                         if (response!!.isSuccessful) {
-                                            var category = response?.body()?.category
+                                            var category = response?.body()?.children
                                             println(category.toString())
-                                            category?.let { it ->
-                                                println(it)
+                                            category?.apply {
+                                                this.forEach {
+                                                    println(it)
+
+                                                    API11stManager.getCategory(category = Integer.parseInt(it.categoryCode), option = "SubCategory").enqueue(
+                                                            object: Callback<CategoryResponse>{
+                                                                override fun onFailure(call: Call<CategoryResponse>?, t: Throwable?) {
+
+                                                                }
+
+                                                                override fun onResponse(call: Call<CategoryResponse>?, response: Response<CategoryResponse>?) {
+                                                                    response?.body()?.apply {
+                                                                        this?.subCategory?.apply {
+                                                                            println("sub: $this")
+                                                                        }
+                                                                        this?.children?.apply {
+                                                                            println("child: $this")
+                                                                        }
+                                                                        this?.products?.apply {
+                                                                            println("prod: $this")
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                    )
+
+                                                    API11stManager.getCategory(category = Integer.parseInt(it.categoryCode), option = "Products").enqueue(
+                                                            object: Callback<CategoryResponse>{
+                                                                override fun onFailure(call: Call<CategoryResponse>?, t: Throwable?) {
+
+                                                                }
+
+                                                                override fun onResponse(call: Call<CategoryResponse>?, response: Response<CategoryResponse>?) {
+                                                                    response?.body()?.apply {
+                                                                        this?.subCategory?.apply{
+                                                                            Flowable.fromArray(this)
+                                                                                    .subscribeOn(Schedulers.io())
+                                                                                    .subscribe { println("sub: $it") }
+                                                                        }
+
+                                                                        this?.children?.apply {
+                                                                            Flowable.fromArray(this)
+                                                                                    .subscribeOn(Schedulers.io())
+                                                                                    .subscribe { println("child: $it") }
+                                                                        }
+                                                                        this?.products?.product?.apply{
+                                                                        Flowable.fromArray(this)
+                                                                                .subscribeOn(Schedulers.io())
+                                                                                .subscribe { println("prod: $it") }
+                                                                    }
+                                                                    }
+                                                                }
+                                                            }
+                                                    )
+                                                }
                                             }
-
-
                                             /*var products = response?.body()?.products
                                             println(products.toString())
                                             products?.let{ product ->

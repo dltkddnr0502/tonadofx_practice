@@ -3,6 +3,8 @@ package com.ddnr.find11st
 import tornadofx.App
 
 /**
+ * http://openapi.11st.co.kr/openapi/OpenApiGuide.tmall
+ *
  * https://edvin.gitbooks.io/tornadofx-guide/content/part1/3.%20Components.html
  * https://github.com/thomasnield/rxkotlinfx-tornadofx-demo
  * https://github.com/dltkddnr0502/tonadofx_practice
