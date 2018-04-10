@@ -32,8 +32,6 @@ object API11stManager {
 
     private val api11stPlanet: API11stPlanet by lazy {
         println("API11stPlanet Created!")
-        val a: MyView.StateEnum = MyView.StateEnum.IDLE //object
-        val b: MyView.StateEnum = MyView.StateEnum.BUSY() //class
         createPlanet()
     }
 

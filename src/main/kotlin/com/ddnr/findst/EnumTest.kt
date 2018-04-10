@@ -1,12 +1,13 @@
 package com.ddnr.findst
 
+import com.ddnr.find11st.KotlinPractice
 import com.ddnr.find11st.MyView
 
 sealed class EnumTest {
-    val a = MyView.StateEnum.IDLE
-    val b = MyView.StateEnum.BUSY()
-    val c = MyView.StatusEnum.IDLE
-    val d = MyView.StatusEnum.BUSY
+    val a = KotlinPractice.StateEnum.IDLE
+    val b = KotlinPractice.StateEnum.BUSY()
+    val c = KotlinPractice.StatusEnum.IDLE
+    val d = KotlinPractice.StatusEnum.BUSY
 
     init {
         println(" $a, $b, $c, $d")

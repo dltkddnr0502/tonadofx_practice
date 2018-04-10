@@ -36,6 +36,14 @@ import tornadofx.App
  * http://freecontent.manning.com/declaring-higher-order-functions/
  *
  * https://android.jlelse.eu/kotlin-what-is-a-sealed-classe-1e535c416519
+ *
+ * http://www.baeldung.com/kotlin-generics
+ *
+ * https://github.com/ReactiveX/RxJava/wiki/Backpressure-(2.0)
+ * https://github.com/ReactiveX/RxJava/wiki/What's-different-in-2.0
+ * https://github.com/ReactiveX/RxJava/wiki/Backpressure
+ *
+ *http://andresalmiray.com/writing-javafx-applications-with-kotlin/
  * */
 
 class Find11stApplication: App(MyView::class)

@@ -1,7 +1,6 @@
 package com.ddnr.find11st
 
 import com.ddnr.find11st.api.API11stManager
-import com.ddnr.find11st.model.Category
 import com.ddnr.find11st.model.CategoryResponse
 import com.github.thomasnield.rxkotlinfx.actionEvents
 import com.github.thomasnield.rxkotlinfx.events
@@ -12,7 +11,6 @@ import io.reactivex.Observer
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import io.reactivex.disposables.Disposables
-import io.reactivex.functions.Action
 import io.reactivex.functions.BiFunction
 import io.reactivex.functions.Consumer
 import io.reactivex.observers.DisposableObserver
@@ -22,7 +20,6 @@ import io.reactivex.rxjavafx.schedulers.JavaFxScheduler
 import io.reactivex.rxkotlin.*
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.BehaviorSubject
-import javafx.scene.Parent
 import javafx.scene.control.Button
 import javafx.scene.control.Label
 import javafx.scene.control.ListView
@@ -34,35 +31,443 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import tornadofx.View
-import java.io.Serializable
 import java.time.Duration
 import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.Comparator
 import kotlin.concurrent.thread
 import kotlin.coroutines.experimental.RestrictsSuspension
 import kotlin.system.measureTimeMillis
 
-//import kotlinx.coroutines.experimental.javafx.JavaFx as UI
+/**
+ * https://developers.skplanetx.com/apidoc/kor/11st/product/#doc1431
+ * */
+typealias Foo<T> = (T) -> Boolean
+typealias MyHandler<T1, T2, T3, R> = (T1, T2, T3) -> R
+typealias MyHandler2<T1, T2, T3, R> = (T1, T2, T3) -> R
 
-class MyView : View() {
-    override val root = VBox()
-    private val disposalbles = CompositeDisposable()
-    private val listView: ListView<String> by lazy {
-        var list = ListView<String>()
-        (0..9).asSequence().map { it.toString() }.forEach { list.items.add(it) }
-        list.events(javafx.scene.input.MouseEvent.MOUSE_CLICKED)
-//                .events(javafx.scene.input.KeyEvent.KEY_RELEASED)
-                //.map{it}
-                //.filter{it.matches(Regex("[0-9]]"))}
-                .subscribe { next ->
-                    println("next: $next")
-                    //listView.selectionModel.select(next)
-                }
-        list
+//Extension Properties
+public val <T> List<T>.last: Int
+    get() = size - 1
+
+
+interface Source<out T> {
+    fun nextT(): T
+}
+
+class KotlinPractice {
+
+    data class D(
+            var a: String,
+            var b: Int,
+            var c: Boolean = true
+    ) {
+
+        init {
+            println("DDDDD")
+        }
+
+        var isEmpty: Boolean = a.length == 0
+            get() {
+                return a.length == 0
+            }
+    }
+
+
+    fun demo(strs: Source<String>) {
+        val objects: Source<Any> = strs
+    }
+
+    //Companion Object Extensions
+    fun DD.Companion.abcd() {
+
+    }
+
+    class DD() {
+        companion object {
+            fun abc() {
+
+            }
+        }
+
+        //Declaring Extensions as Members
+        fun AC.foo(value: Int) {
+
+        }
+
+        fun foo(ac: AC) {
+            ac.foo(1)
+//            innerMemberReference = 1 //compile error
+        }
+    }
+
+    var innerMemberReference: Int = 1
+
+    annotation class Fancy
+    @RestrictsSuspension //to prevent the user from adding new ways of suspending a coroutine.
+    //A class may be marked as inner to be able to access members of outer class.
+    // Inner classes carry a reference to an object of an outer class:
+    @Fancy inner class AC(a: String) {
+        init {
+            println("Init $a")
+        }
+
+
+        constructor(a: String, b: Int) : this(a) {
+            println("2nd Cons $a, $b")
+        }
+
+        fun ad2bc() {
+            innerMemberReference = 1 //inner class can access to outer class's member
+        }
+
+        //internal — any client inside this module who sees the declaring class sees its internal members;
+        internal fun abc() {
+
+        }
+
+        var a = a
+                //can not be private*
+            get() {
+                println("cons get, field: $field")
+                val r = if (field.length > 0) field else 0
+                return field
+            }
+                //get() = field
+                //can internal, private, public
+            public set(value) {
+                println("cons set, value: $value")
+                field = value
+            }
+    }
+
+    sealed class StateEnum {
+        abstract fun direction(x: Int, y: Int): Pair<Int, Int>
+
+        object IDLE : StateEnum() {  //SINGLE INSTANCE!!!
+            override fun direction(x: Int, y: Int) = x to x + y
+        }
+
+        class BUSY : StateEnum() { //CAN class!!!! Multiple INSTANCE!!
+            override fun direction(x: Int, y: Int): Pair<Int, Int> {
+                return x to x + y
+            }
+        }
+    }
+
+    //val stateEnum: StateEnum = StateEnum.IDLE()
+
+    enum class StatusEnum {
+        IDLE { //SINGLE INSTANCE!!!
+            override fun direction(x: Int, y: Int) = x to x + y
+        },
+        BUSY { //SINGLE INSTANCE!!!
+            override fun direction(x: Int, y: Int): Pair<Int, Int> {
+                return x to x + y
+            }
+        };
+
+        //DO NOT FORGET ';'
+        abstract fun direction(x: Int, y: Int): Pair<Int, Int>
+    }
+
+    fun abdsfdf(state: StateEnum) = when (state) {
+        is StateEnum.IDLE -> ""
+        is StateEnum.BUSY -> ""
+    }
+
+
+    /*inner */class ImplHighOrderFunction(nn: String = "", var ss: String = "IDLE") {
+        init {
+            println("$nn / $ss")
+        }
+
+        val aaaa = nn
+
+        fun abc() {
+            println("${aaaa} / ${this.ss}")
+        }
+
+        fun <T, R> lollipopAndAbove(
+                a: T, b: T, s: String,
+                body: (T) -> R
+        ): R {
+            println(" ")
+            return body(a)
+        }
+    }
+
+    fun <T, R> lollipopAndAbove(
+            a: T, b: T, s: String,
+            body: (T) -> Unit
+    ): (T) -> R {
+        //return body(a)
+        body(a)
+        return { T ->
+            println("TTTT ${T}")
+            "AA $T AA" as R
+        }
+    }
+
+    class Box<T>(t: T) {
+        private var v: T = t
+
+        private val finalV: String by lazy {
+            ""//initA()
+        }
+
+
+        fun abc(): T {
+            return v
+        }
+
+        fun abcIn(tt: T) {
+
+            v = tt
+        }
+    }
+
+
+    /////
+    //https://kotlinlang.org/docs/reference/generics.html
+    val bt: BoxT = BoxT()
+
+    class BoxT : Source<String> {
+        override fun nextT(): String {
+            return ""
+        }
+    }
+
+    fun demo2(strs: String): String {
+        return ""
+    }
+
+    /**
+     * we defined that all elements T needed to implement the Comparable interface.
+     * */
+    /*fun <T: Comparable<T>> sort(list: List<T>): List<T> {
+        return list.sorted()
+    }*/
+
+    /**
+     * out
+     * We need to use the out keyword on the generic type.
+     * It means that we can assign this reference to any of its supertypes.
+     * The out value can be only be produced by the given class but not consumed:
+     *
+     * in
+     * We can use the in keyword on the generic type if we want to assign it to the reference of its subtype.
+     * The in keyword can be used only on the parameter type that is consumed, not produced:
+     * */
+    class ParameterizedProducer<out T>(private val value: T) {
+        fun gggg(): T {
+            return value
+        }
+
+        fun get(): T {
+            return value
+        }
+    }
+
+    //out assign to super type
+    private val parameterizedProducer = ParameterizedProducer<String>("string")
+    val ref: ParameterizedProducer<Any> = parameterizedProducer
+
+    class ParamT<T> {
+    }
+
+    val par3: ParamT<Int> = ParamT()
+    val par4: ParamT<String> = ParamT()
+
+    class ParameterizedConsumer<in T> {
+        fun toString(value: T): String {
+
+            return value.toString()
+        }
+    }
+
+    //in assgign to sub type
+    val parameterizedConsumer = ParameterizedConsumer<Number>()
+    val refC: ParameterizedConsumer<Double> = parameterizedConsumer
+
+
+    fun <T : Comparable2<T>> gene(param: T) {
+
+    }
+
+    interface Comparable2<in T> {
+        operator fun compareTo(other: T): Int
+    }
+
+    fun <T : Comparable3<T>> gene(param: T) {
+
+    }
+
+    interface Comparable3<in T> {
+
+    }
+
+    interface Comparable4<out T> {
+
+    }
+
+    fun <T : Comparable3<Double>> gene3(param: T) {
+    }
+
+    fun <T : Comparable4<Number>> gene4(param: T) {
+    }
+
+    fun demo(xxx: Comparable4<Double>, xx: Comparable3<Number>, x: Comparable<Number>) {
+        gene3(xx)
+        gene4(xxx)
+        x.compareTo(1.0) // 1.0 has type Double, which is a subtype of Number
+        // Thus, we can assign x to a variable of type Comparable<Double>
+        val y: Comparable<Double> = x // OK!
+    }
+    /////
+
+
+    val aS: Box<String> = Box("ABC")
+    val dd: D = D("a,", 1)
+    val ac: AC = AC("a")
+    val ac2: AC = AC("a", 2)
+    val disposalble: Disposables? = null
+    //val aDIs: Box<Disposables> = Box(CompositeDisposable() as Disposables)
+    val implHighOrderFunction: ImplHighOrderFunction = ImplHighOrderFunction()
+
+    //@Suppress("NOTHING_TO_INLINE")
+    /* In case you want only some of the lambdas passed to an inline function to be inlined,
+    you can mark some of your function parameters with the noinline modifier: */
+    inline fun <T, R> abc(noinline block: T.() -> Unit, block2: (T) -> R) {
+
+    }
+
+    inline fun abc(observable: Observable<ProductSearchResponse>, categoryResponse: Observable<CategoryResponse>) {
+
+    }
+
+    private /*suspend*/ fun AC.foo() {
+
+    }
+
+    fun abcd() {
+
+    }
+
+    val disposalbles = CompositeDisposable()
+
+    //Extension Funtions
+    fun <T> MutableList<T>.swap(index1: Int, index2: Int) {
+        val tmp = this[index1]
+        this[index2] = this[index1]
+        this[index2] = tmp
+    }
+
+    fun bar(foo: Foo<Int>) = foo(42)
+    fun bar2(foo2: MyHandler<Int, String, Int, Int>): Int = foo2(1, "My", 3)
+    fun bar3(foo3: MyHandler<Int, Int, Int, Boolean>): Boolean = foo3(1, 2, 3)
+    fun bar4(foo3: MyHandler2<Int, Int, Int, String>): String = foo3(1, 2, 3)
+    fun bar5(name: String) {
+        println(name.length)
+    }
+
+
+    fun bar6(name: String?): String? {
+        println(name?.length)
+        listOf(1).lastIndex
+        listOf(1).last
+        return null
+    }
+
+    fun bar7(name: String?): String {
+        fun lo(subName: String?): String {
+            return subName?.toUpperCase() ?: ""
+        }
+        println(name?.length)
+        return lo(name)
+    }
+
+    val initPlug: Int.(Int) -> Int = { b ->
+        println("initPlug $this + $b")
+        this + b
     }
 
     init {
+        val ret1 = lollipopAndAbove<Int, String>(
+                initPlug(1, 2), 2, "HighOrderFunctionInterface3"
+        ) { a ->
+            println("HighOrderFunctionInterface1: $a")
+            //"HighOrderFunctionInterface: $a"
+        }
+
+        println("ret1: ${ret1(123)}")
+
+        val ar2 = { i: Int -> i + 1 }
+        implHighOrderFunction.lollipopAndAbove(
+                ar2(1), 2, "HighOrderFunctionInterface"
+        ) { a ->
+            println("HighOrderFunctionInterface2: $a")
+        }
+
+        val ar = { i: Int -> i + 1 }
+        ar(1)
+
+        2.initPlug(2)
+        initPlug(2, 2)
+        initPlug.invoke(2, 2)
+
+        var f: (Int) -> Boolean = {
+            it > 0
+        }
+        bar(f)
+        var ff: (Int, String, Int) -> Int = { i, s, a ->
+            i + s.length + a
+        }
+        println("${bar2(ff)}")
+
+        var fff: (Int, Int, Int) -> Boolean = { i, ii, iii ->
+            i + ii + iii > 1
+        }
+        var ffff: (Int, Int, Int) -> String = { i, ii, iii ->
+            (i + ii + iii).toString()
+        }
+        println("${bar3(fff)}")
+        println("${bar4(ffff)}")
+        val nN = ""
+
+        val a: String? = nN as? String
+        val b: String? = nN as? String?
+
+        listOf(1, 3, 4, 5, 6, 7).reversed()
+        listOf(1, 3, 4, 5, 6, 7)
+        mutableListOf(1, 2, 3).add(4)
+        1.rangeTo(100)
+        println(100.downTo(5).reversed().step(2).step(2))
+
+        val nll: String? = null
+        bar5(nN)
+        //bar5(nll) //err
+        //bar5(bar6(null)) //err
+        bar5(bar7(null))
+        bar6(null)
+
+        """ .'''*((.. ${'$'}eq """
+
+        println("Spliet: ${"12.345.6a".split(".")}")
+
+        ac.a
+        ac.a = "1"
+
+        val lE = listOf("a", "b").toTypedArray()
+        println("LE ${listOf("lE: ", *lE)}")
+
+        //val (num, name) = mapOf(1 to "one")
+        val (num, name) = 1 to "one"
+        println("$num, $name")
+
+        dd.component1()
+        dd.component2()
+        dd.component3()
+
 
         var button: Button = Button("start")
         button.actionEvents()
@@ -105,15 +510,10 @@ class MyView : View() {
                                             println(category.toString())
                                             category?.apply {
                                                 this.forEach {
-                                                    var parent = it
                                                     println(it)
 
                                                     API11stManager.getCategory(category = Integer.parseInt(it.categoryCode), option = "SubCategory").enqueue(
                                                             object : Callback<CategoryResponse> {
-                                                                fun Category.toStringWithoutImg(): String {
-                                                                    return "SUB_CATE ${parent.categoryName} // ${categoryName} / ${this.categoryCode}"
-                                                                }
-
                                                                 override fun onFailure(call: Call<CategoryResponse>?, t: Throwable?) {
 
                                                                 }
@@ -121,90 +521,42 @@ class MyView : View() {
                                                                 override fun onResponse(call: Call<CategoryResponse>?, response: Response<CategoryResponse>?) {
                                                                     response?.body()?.apply {
                                                                         this?.subCategory?.apply {
-                                                                            this.toFlowable()
-                                                                                    .parallel()
-                                                                                    .sorted { o1, o2 ->
-                                                                                        if (o1.categoryCode?.toInt() ?: 0 > o2.categoryCode?.toInt() ?: 0) {
-                                                                                            1
-                                                                                        } else {
-                                                                                            0
-                                                                                        }
-                                                                                    }
-                                                                                    //.onBackpressureBuffer() //possible
-                                                                                    //.onBackpressureBuffer(10)
-                                                                                    //.onBackpressureBuffer(100) { /*Do action when overflows.*/ }
-                                                                                    //.onBackpressureBuffer(100, {}, BackpressureOverflowStrategy.DROP_OLDEST)
-                                                                                    .onBackpressureDrop()
-                                                                                    //.onBackpressureDrop { /*Consumer, accept*/ }
-                                                                                    .throttleWithTimeout(1000, TimeUnit.MILLISECONDS)
-                                                                                    .debounce(1000, TimeUnit.MILLISECONDS)
-                                                                                    .observeOn(JavaFxScheduler.platform())
-                                                                                    //.buffer(5)
-                                                                                    .subscribe { it ->
-                                                                                        listView.items.add(it.toStringWithoutImg())
-                                                                                    }
+                                                                            println("sub: $this")
+                                                                        }
+                                                                        this?.children?.apply {
+                                                                            println("child: $this")
+                                                                        }
+                                                                        this?.products?.apply {
+                                                                            println("prod: $this")
                                                                         }
                                                                     }
                                                                 }
                                                             }
                                                     )
-
-                                                    var ppp: io.reactivex.processors.PublishProcessor<Product>? = null
-
 
                                                     API11stManager.getCategory(category = Integer.parseInt(it.categoryCode), option = "Products").enqueue(
                                                             object : Callback<CategoryResponse> {
-                                                                fun Product.toStringWithoutImg(): String {
-                                                                    return "PRD: ${parent.categoryName} // ${prodName} ${prodCode} ${prodPrice} ${benefit} ${buySatisfy} ${seller} ${sellerGrd} ${sellerNick} ${delivery} ${salePrice} ${reviewCount}"
-                                                                }
-
                                                                 override fun onFailure(call: Call<CategoryResponse>?, t: Throwable?) {
 
                                                                 }
 
                                                                 override fun onResponse(call: Call<CategoryResponse>?, response: Response<CategoryResponse>?) {
                                                                     response?.body()?.apply {
-                                                                        this?.products?.product?.apply {
-                                                                            this.toFlowable()
-                                                                                    .filter {
-                                                                                        it.buySatisfy != null && Integer.parseInt(it.buySatisfy) >= 90
-                                                                                    }.sorted { o1, o2 ->
-                                                                                if (o1?.buySatisfy?.toInt() ?: 0 > o2?.buySatisfy?.toInt() ?: 0) {
-                                                                                    1
-                                                                                } else {
-                                                                                    0
-                                                                                }
-                                                                            }
-                                                                                    .distinct { it.sellerNick }
-                                                                                    .observeOn(JavaFxScheduler.platform())
-                                                                                    .subscribe { it ->
-                                                                                        listView.items.add(it.toStringWithoutImg())
-                                                                                    }
+                                                                        this?.subCategory?.apply {
+                                                                            Flowable.fromArray(this)
+                                                                                    .subscribeOn(Schedulers.io())
+                                                                                    .subscribe { println("sub: $it") }
                                                                         }
-                                                                    }
-                                                                }
-                                                            }
-                                                    )
 
-                                                    API11stManager.getCategory(category = Integer.parseInt(it.categoryCode), option = "Children").enqueue(
-                                                            object : Callback<CategoryResponse> {
-                                                                fun Category.toStringWithoutImg(): String {
-                                                                    return "CHD ${parent.categoryName} // ${categoryName} / ${this.categoryCode}"
-                                                                }
-
-                                                                override fun onFailure(call: Call<CategoryResponse>?, t: Throwable?) {
-
-                                                                }
-
-                                                                override fun onResponse(call: Call<CategoryResponse>?, response: Response<CategoryResponse>?) {
-                                                                    //println(response?.body())
-                                                                    response?.body()?.apply {
                                                                         this?.children?.apply {
-                                                                            this.toFlowable()
-                                                                                    .observeOn(JavaFxScheduler.platform())
-                                                                                    .subscribe { it ->
-                                                                                        listView.items.add(it.toStringWithoutImg())
-                                                                                    }
+                                                                            Flowable.fromArray(this)
+                                                                                    .subscribeOn(Schedulers.io())
+                                                                                    .subscribe { println("child: $it") }
+                                                                        }
+                                                                        this?.products?.product?.apply {
+                                                                            Flowable.fromArray(this)
+                                                                                    .subscribeOn(Schedulers.io())
+                                                                                    .subscribe { println("prod: $it") }
                                                                         }
                                                                     }
                                                                 }
@@ -212,6 +564,11 @@ class MyView : View() {
                                                     )
                                                 }
                                             }
+                                            /*var products = response?.body()?.products
+                                            println(products.toString())
+                                            products?.let{ product ->
+                                                println(product)
+                                            }*/
                                         }
                                     }
 
@@ -255,7 +612,7 @@ class MyView : View() {
                 3 -> {
                     async {
                         withTimeout(
-                                java.time.Duration.ofSeconds(1000, 50),
+                                Duration.ofSeconds(1000, 50),
                                 {
                                     repeat(1) {
                                         println("Timeout ${it}")
@@ -541,6 +898,11 @@ class MyView : View() {
                             }, { println("Succeed") })
 
                     //doSuspending("Not from async") //Compile error
+
+                    async {
+                        println("async suspending: ${Thread.currentThread()}")
+                        doSuspending("Suspedddd")
+                    }
                 }
                 4 -> {
                     val p = Observable.just(API11stManager.search("asus"))
@@ -642,6 +1004,9 @@ class MyView : View() {
                             )
                     val buffSize: Int = Flowable.bufferSize()
                     println("buffSize: $buffSize")
+                }
+                6 -> {
+                    letPractice()
                 }
                 7 -> {
                     Observable.just(1)
@@ -927,20 +1292,160 @@ class MyView : View() {
             }
         }
 
-        root.children += button
-        root.children += Label("Label: ")
-
-        root.children += listView
-
-        val editText = TextField()
-        editText.textProperty()
-                .toObservable()
-                .subscribe { next -> println("$next") }
-        /*.addListener { _observable, oldValue, newValue ->
-    run {
-        println("old: $oldValue, new: $newValue")
+        var listView = ListView<String>()
+        (0..9).asSequence().map { it.toString() }.forEach { listView.items.add(it) }
+        listView
+                .events(javafx.scene.input.MouseEvent.MOUSE_CLICKED)
+//                .events(javafx.scene.input.KeyEvent.KEY_RELEASED)
+                //.map{it}
+                //.filter{it.matches(Regex("[0-9]]"))}
+                .subscribe { next ->
+                    println("next: $next")
+                    //listView.selectionModel.select(next)
+                }
     }
-}*/
-        root.children += editText
+
+
+    fun adfd() {
+        Observable.just(1)
+                .subscribeOn(Schedulers.io())
+                .observeOn(JavaFxScheduler.platform())
+                .subscribe { next ->
+                    println("${Thread.currentThread()}")
+                }
+    }
+
+    /**
+     * fun <T> T.apply(block: T.() -> Unit): T
+     *
+     * fun <T> T.also(block: T.() -> Unit): T
+     *
+     * fun <T, R> T.let(block: (T) -> R): R
+     *
+     * fun <T, R> with(receiver: T, block: T.() -> R): R
+     *
+     * * fun <T, R> takeIf(receiver: T, block: T.() -> R): R
+     *
+     * * fun <T, R> takeUnless(receiver: T, block: T.() -> R): R
+     *
+     * fun <T, R> T.run(block: T.() -> R): R
+     * fun <R> run(block: () -> R): R
+     *
+     * * * fun <T, R> repeat(times: Int, action: (Int)->Unit)
+     * */
+
+    var letPractice: Int? = 42
+
+    fun letPractice() {
+        var a: String? = "ABC"
+        val b: Int = a?.length ?: 10
+
+        repeat(4/*zero base, 4time*/, { println("repeat: $it") })
+        var retdd = a.takeIf { "ABC" == a }?.let {
+            //a="CBD"
+            a
+        }
+        println("$retdd")
+
+        println("$retdd")
+
+        a = a?.run { "ccc" }
+        println("a?.run: $a")
+        var rr = run {
+            3
+        }
+
+        a = a?.apply {
+            println("$a, ${this.length}")
+            a = "apply" //return T
+        }?.also {
+            println("${it}") //also doesn't take this unlikely 'apply'
+            a = "also" //return T
+        }?.let { it ->
+            println("let it ${it.length}")
+            it
+        }?.run {
+            println("this ${this.length}")
+            this
+        } ?: run {
+            "abc"
+        } ?: with(a, {
+            println("${this?.length}")
+            this
+        })?.takeIf {
+            it == "abc" //return T
+        }?.takeUnless {
+            it == "abc" //return T
+        }
+
+        repeat(1, { it ->
+            a = a?.apply {
+                println("$a, ${this.length}")
+                a = "apply" //return T
+            }?.also {
+                println("${it}") //also doesn't take this unlikely 'apply'
+                a = "also" //return T
+            }?.let { it ->
+                println("let it ${it.length}")
+                it
+            }?.run {
+                println("this ${this.length}")
+                this
+            } ?: run {
+                "abc"
+            } ?: with(a, {
+                println("${this?.length}")
+                this
+            })?.takeIf {
+                it == "abc" //return T
+            }?.takeUnless {
+                it == "abc" //return T
+            }
+            println("at ${it}: $a")
+        })
+
+
+        println("length: $rr")
+
+        var rea = a?.run {
+            length
+        }
+        println("length: $rea")
+
+        with(ProductSearchResponse(), { println("${products}") })
+
+        a = a?.let { "aaa" } ?: run { "bbb" }
+        println("a?.let & run: $a")
+
+        a?.let { println("$it") }.also { println("$it") }.run { println("") }
+        letPractice = null
+        var ret = letPractice?.let {
+            println(it)
+            //return letPracticeSub()
+            "Let when it is null"
+        } ?: run {
+            println("Run when it is null")
+            "Run when it is null"
+        }
+        println("ret: $ret")
+
+        var ret2 = letPractice?.let { it } ?: return
+        println("ret2: $ret2. Not reach if it is null by return statement")
+    }
+
+    fun letPracticeSub() {
+        return Unit
+    }
+
+    fun returnInt(): Int {
+        return 1
+    }
+
+    fun returnInt2(): Int = 1
+
+
+    private suspend fun doSuspending(a: String): Int {
+        println("doSuspending: ${Thread.currentThread()}")
+        return a.length
     }
 }
